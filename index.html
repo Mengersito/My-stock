@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Stock</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    h1 { text-align: center; }
+    .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #333; color: white; }
+    button.delete { background: #c0392b; color: white; border: none; cursor: pointer; }
+    button.add { background: #27ae60; color: white; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Stock de Productos</h1>
+
+    <input type="text" id="product" placeholder="Nombre del producto" />
+    <input type="number" id="quantity" placeholder="Cantidad" />
+    <button class="add" onclick="addProduct()">Agregar producto</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="stockTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function addProduct() {
+      const product = document.getElementById('product').value;
+      const quantity = document.getElementById('quantity').value;
+
+      if (product === '' || quantity === '') {
+        alert('Completa todos los campos');
+        return;
+      }
+
+      const table = document.getElementById('stockTable');
+      const row = table.insertRow();
+
+      row.insertCell(0).innerText = product;
+      row.insertCell(1).innerText = quantity;
+      row.insertCell(2).innerHTML = '<button class="delete" onclick="this.parentElement.parentElement.remove()">Eliminar</button>';
+
+      document.getElementById('product').value = '';
+      document.getElementById('quantity').value = '';
+    }
+  </script>
+</body>
+</html>
