@@ -5,31 +5,87 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gestión de Stock</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
     h1 { text-align: center; }
-    .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-    input, button { padding: 8px; margin: 5px 0; width: 100%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background: #333; color: white; }
-    button.delete { background: #c0392b; color: white; border: none; cursor: pointer; }
-    button.add { background: #27ae60; color: white; border: none; cursor: pointer; }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .form {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 14px;
+    }
+    button.add {
+      background: #27ae60;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #333;
+      color: white;
+    }
+    button.edit {
+      background: #2980b9;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button.delete {
+      background: #c0392b;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Stock de Productos</h1>
 
-    <input type="text" id="product" placeholder="Nombre del producto" />
-    <input type="number" id="quantity" placeholder="Cantidad" />
-    <button class="add" onclick="addProduct()">Agregar producto</button>
+    <div class="form">
+      <input type="text" id="product" placeholder="Producto" />
+      <input type="number" id="quantity" placeholder="Cantidad" />
+      <input type="number" id="price" placeholder="Precio" step="0.01" />
+      <button class="add" onclick="addProduct()">Agregar</button>
+    </div>
 
     <table>
       <thead>
         <tr>
           <th>Producto</th>
           <th>Cantidad</th>
-          <th>Acción</th>
+          <th>Precio</th>
+          <th>Total</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody id="stockTable"></tbody>
@@ -40,8 +96,9 @@
     function addProduct() {
       const product = document.getElementById('product').value;
       const quantity = document.getElementById('quantity').value;
+      const price = document.getElementById('price').value;
 
-      if (product === '' || quantity === '') {
+      if (product === '' || quantity === '' || price === '') {
         alert('Completa todos los campos');
         return;
       }
@@ -51,10 +108,33 @@
 
       row.insertCell(0).innerText = product;
       row.insertCell(1).innerText = quantity;
-      row.insertCell(2).innerHTML = '<button class="delete" onclick="this.parentElement.parentElement.remove()">Eliminar</button>';
+      row.insertCell(2).innerText = `$${parseFloat(price).toFixed(2)}`;
+      row.insertCell(3).innerText = `$${(quantity * price).toFixed(2)}`;
+
+      row.insertCell(4).innerHTML = `
+        <button class="edit" onclick="editRow(this)">Editar</button>
+        <button class="delete" onclick="this.parentElement.parentElement.remove()">Eliminar</button>
+      `;
 
       document.getElementById('product').value = '';
       document.getElementById('quantity').value = '';
+      document.getElementById('price').value = '';
+    }
+
+    function editRow(button) {
+      const row = button.parentElement.parentElement;
+      const product = row.cells[0].innerText;
+      const quantity = row.cells[1].innerText;
+      const price = row.cells[2].innerText.replace('$', '');
+
+      const newQuantity = prompt(`Nueva cantidad para ${product}:`, quantity);
+      const newPrice = prompt(`Nuevo precio para ${product}:`, price);
+
+      if (newQuantity !== null && newPrice !== null) {
+        row.cells[1].innerText = newQuantity;
+        row.cells[2].innerText = `$${parseFloat(newPrice).toFixed(2)}`;
+        row.cells[3].innerText = `$${(newQuantity * newPrice).toFixed(2)}`;
+      }
     }
   </script>
 </body>
