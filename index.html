@@ -5,71 +5,108 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gestión de Stock</title>
   <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #222;
+      --primary: #27ae60;
+      --secondary: #2980b9;
+      --danger: #c0392b;
+    }
+
+    body.dark {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #f1f1f1;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f8;
+      background: var(--bg);
+      color: var(--text);
       padding: 20px;
+      transition: background 0.3s, color 0.3s;
     }
+
     h1 { text-align: center; }
+
     .container {
       max-width: 900px;
       margin: auto;
-      background: white;
+      background: var(--card);
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: background 0.3s;
     }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
     .form {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr auto;
       gap: 10px;
       margin-bottom: 20px;
     }
-    input, button {
+
+    input {
       padding: 10px;
-      font-size: 14px;
-    }
-    button.add {
-      background: #27ae60;
-      color: white;
-      border: none;
-      cursor: pointer;
       border-radius: 5px;
+      border: 1px solid #ccc;
     }
+
+    button {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button.add { background: var(--primary); color: white; }
+    button.edit { background: var(--secondary); color: white; }
+    button.delete { background: var(--danger); color: white; }
+
     table {
       width: 100%;
       border-collapse: collapse;
     }
+
     th, td {
-      border: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
       padding: 10px;
       text-align: center;
     }
-    th {
-      background: #333;
-      color: white;
+
+    th { background: rgba(0,0,0,0.05); }
+
+    body.dark th { background: rgba(255,255,255,0.05); }
+
+    .actions button { margin: 0 3px; }
+
+    .toggle {
+      background: none;
+      border: 1px solid #ccc;
+      color: var(--text);
     }
-    button.edit {
-      background: #2980b9;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button.delete {
-      background: #c0392b;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 5px;
-      cursor: pointer;
+
+    .editable {
+      width: 60px;
+      padding: 5px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Stock de Productos</h1>
+    <div class="top-bar">
+      <h1>Stock</h1>
+      <button class="toggle" onclick="toggleTheme()">🌙 / ☀️</button>
+    </div>
 
     <div class="form">
       <input type="text" id="product" placeholder="Producto" />
@@ -93,49 +130,74 @@
   </div>
 
   <script>
+    let stock = JSON.parse(localStorage.getItem('stock')) || [];
+    let theme = localStorage.getItem('theme') || 'light';
+
+    if (theme === 'dark') document.body.classList.add('dark');
+
+    function saveStock() {
+      localStorage.setItem('stock', JSON.stringify(stock));
+    }
+
+    function renderStock() {
+      const table = document.getElementById('stockTable');
+      table.innerHTML = '';
+
+      stock.forEach((item, index) => {
+        const row = table.insertRow();
+
+        row.innerHTML = `
+          <td>${item.product}</td>
+          <td><input class="editable" type="number" value="${item.quantity}" onchange="updateQuantity(${index}, this.value)"></td>
+          <td><input class="editable" type="number" step="0.01" value="${item.price}" onchange="updatePrice(${index}, this.value)"></td>
+          <td>$${(item.quantity * item.price).toFixed(2)}</td>
+          <td class="actions">
+            <button class="delete" onclick="deleteProduct(${index})">✕</button>
+          </td>
+        `;
+      });
+    }
+
     function addProduct() {
       const product = document.getElementById('product').value;
       const quantity = document.getElementById('quantity').value;
       const price = document.getElementById('price').value;
 
-      if (product === '' || quantity === '' || price === '') {
-        alert('Completa todos los campos');
-        return;
-      }
+      if (!product || !quantity || !price) return alert('Completa todos los campos');
 
-      const table = document.getElementById('stockTable');
-      const row = table.insertRow();
-
-      row.insertCell(0).innerText = product;
-      row.insertCell(1).innerText = quantity;
-      row.insertCell(2).innerText = `$${parseFloat(price).toFixed(2)}`;
-      row.insertCell(3).innerText = `$${(quantity * price).toFixed(2)}`;
-
-      row.insertCell(4).innerHTML = `
-        <button class="edit" onclick="editRow(this)">Editar</button>
-        <button class="delete" onclick="this.parentElement.parentElement.remove()">Eliminar</button>
-      `;
+      stock.push({ product, quantity: Number(quantity), price: Number(price) });
+      saveStock();
+      renderStock();
 
       document.getElementById('product').value = '';
       document.getElementById('quantity').value = '';
       document.getElementById('price').value = '';
     }
 
-    function editRow(button) {
-      const row = button.parentElement.parentElement;
-      const product = row.cells[0].innerText;
-      const quantity = row.cells[1].innerText;
-      const price = row.cells[2].innerText.replace('$', '');
-
-      const newQuantity = prompt(`Nueva cantidad para ${product}:`, quantity);
-      const newPrice = prompt(`Nuevo precio para ${product}:`, price);
-
-      if (newQuantity !== null && newPrice !== null) {
-        row.cells[1].innerText = newQuantity;
-        row.cells[2].innerText = `$${parseFloat(newPrice).toFixed(2)}`;
-        row.cells[3].innerText = `$${(newQuantity * newPrice).toFixed(2)}`;
-      }
+    function updateQuantity(index, value) {
+      stock[index].quantity = Number(value);
+      saveStock();
+      renderStock();
     }
+
+    function updatePrice(index, value) {
+      stock[index].price = Number(value);
+      saveStock();
+      renderStock();
+    }
+
+    function deleteProduct(index) {
+      stock.splice(index, 1);
+      saveStock();
+      renderStock();
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    renderStock();
   </script>
 </body>
 </html>
