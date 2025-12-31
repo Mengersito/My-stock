@@ -17,6 +17,28 @@
   h2 {
     margin-top: 20px;
   }
+  .opciones-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .opcion {
+    flex: 1;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+  .opcion:hover {
+    background: #f0f0f0;
+  }
+  .opcion.active {
+    border-color: #4caf50;
+    background: #d4f5d4;
+  }
   input[type="number"], input[type="text"] {
     width: 80px;
     padding: 5px;
@@ -25,6 +47,7 @@
   button {
     padding: 5px 10px;
     margin: 5px;
+    cursor: pointer;
   }
   .minimal {
     border: 1px solid #ccc;
@@ -44,22 +67,22 @@
 </head>
 <body>
 
-<button onclick="toggleMode()">Modo Oscuro/Claro</button>
+<button onclick="toggleMode()">🌙 / ☀️</button>
 
-<h2>Opciones</h2>
-<select id="opciones" onchange="mostrarSeccion()">
-  <option value="stock">Stock</option>
-  <option value="deudas">Deudas</option>
-</select>
+<h2>Elige una opción</h2>
+<div class="opciones-container">
+  <div class="opcion" id="opcion-stock" onclick="mostrarSeccion('stock')">📦 Stock</div>
+  <div class="opcion" id="opcion-deudas" onclick="mostrarSeccion('deudas')">💰 Deudas</div>
+</div>
 
 <!-- SECCION STOCK -->
-<div id="stock-seccion">
+<div id="stock-seccion" style="display:none;">
   <h2>Stock de Productos</h2>
   <div>
     Producto 1: <input type="number" class="minimal" id="prod1" value="0">
     Producto 2: <input type="number" class="minimal" id="prod2" value="0">
     Producto 3: <input type="number" class="minimal" id="prod3" value="0">
-    <button onclick="guardarStock()">Guardar Stock</button>
+    <button onclick="guardarStock()">💾 Guardar Stock</button>
   </div>
   <p>Total Stock: <span id="total-stock">0</span></p>
 </div>
@@ -70,7 +93,7 @@
   <div>
     Nombre: <input type="text" id="nombre-deuda" class="minimal">
     Cantidad: <input type="number" id="cantidad-deuda" class="minimal" value="0">
-    <button onclick="agregarDeuda()">Agregar Deuda</button>
+    <button onclick="agregarDeuda()">➕ Agregar Deuda</button>
   </div>
   <table id="tabla-deudas">
     <tr>
@@ -87,11 +110,13 @@
     document.body.classList.toggle('dark-mode');
   }
 
-  // Mostrar sección según selección
-  function mostrarSeccion() {
-    const opcion = document.getElementById('opciones').value;
-    document.getElementById('stock-seccion').style.display = opcion === 'stock' ? 'block' : 'none';
-    document.getElementById('deudas-seccion').style.display = opcion === 'deudas' ? 'block' : 'none';
+  // Mostrar sección
+  function mostrarSeccion(seccion) {
+    document.getElementById('stock-seccion').style.display = seccion === 'stock' ? 'block' : 'none';
+    document.getElementById('deudas-seccion').style.display = seccion === 'deudas' ? 'block' : 'none';
+    // Marcar opción activa
+    document.getElementById('opcion-stock').classList.toggle('active', seccion === 'stock');
+    document.getElementById('opcion-deudas').classList.toggle('active', seccion === 'deudas');
   }
 
   // Guardar stock
@@ -113,6 +138,7 @@
       document.getElementById('prod3').value = stockGuardado.prod3;
       document.getElementById('total-stock').textContent = stockGuardado.total;
     }
+    cargarDeudas();
   }
 
   // Deudas
@@ -154,10 +180,7 @@
       actualizarTablaDeudas();
     }
   }
-
-  cargarDeudas();
 </script>
 
 </body>
 </html>
-
