@@ -78,12 +78,14 @@
 <!-- SECCION STOCK -->
 <div id="stock-seccion" style="display:none;">
   <h2>Stock de Productos</h2>
-  <div>
-    Producto 1: <input type="number" class="minimal" id="prod1" value="0">
-    Producto 2: <input type="number" class="minimal" id="prod2" value="0">
-    Producto 3: <input type="number" class="minimal" id="prod3" value="0">
-    <button onclick="guardarStock()">💾 Guardar Stock</button>
-  </div>
+  <table id="tabla-stock">
+    <tr>
+      <th>Producto</th>
+      <th>Cantidad</th>
+      <th>Precio</th>
+    </tr>
+  </table>
+  <button onclick="agregarProducto()">➕ Agregar Producto</button>
   <p>Total Stock: <span id="total-stock">0</span></p>
 </div>
 
@@ -99,6 +101,7 @@
     <tr>
       <th>Nombre</th>
       <th>Cantidad</th>
+      <th>Acciones</th>
     </tr>
   </table>
   <p>Total Deudas: <span id="total-deudas">0</span></p>
@@ -110,38 +113,87 @@
     document.body.classList.toggle('dark-mode');
   }
 
-  // Mostrar sección
+  // Mostrar sección global
   function mostrarSeccion(seccion) {
     document.getElementById('stock-seccion').style.display = seccion === 'stock' ? 'block' : 'none';
     document.getElementById('deudas-seccion').style.display = seccion === 'deudas' ? 'block' : 'none';
-    // Marcar opción activa
     document.getElementById('opcion-stock').classList.toggle('active', seccion === 'stock');
     document.getElementById('opcion-deudas').classList.toggle('active', seccion === 'deudas');
   }
 
-  // Guardar stock
-  function guardarStock() {
-    const prod1 = Number(document.getElementById('prod1').value);
-    const prod2 = Number(document.getElementById('prod2').value);
-    const prod3 = Number(document.getElementById('prod3').value);
-    const total = prod1 + prod2 + prod3;
+  // STOCK
+  let productos = [];
+
+  function agregarProducto() {
+    productos.push({nombre:"Producto", cantidad:0, precio:0});
+    renderStock();
+    guardarStock();
+  }
+
+  function renderStock() {
+    const tabla = document.getElementById('tabla-stock');
+    tabla.innerHTML = `<tr>
+      <th>Producto</th>
+      <th>Cantidad</th>
+      <th>Precio</th>
+      <th>Acciones</th>
+    </tr>`;
+    let total = 0;
+    productos.forEach((p, index) => {
+      const row = tabla.insertRow();
+      
+      // Nombre editable
+      const nombreCell = row.insertCell(0);
+      const nombreInput = document.createElement('input');
+      nombreInput.type = 'text';
+      nombreInput.value = p.nombre;
+      nombreInput.className = 'minimal';
+      nombreInput.onchange = () => { productos[index].nombre = nombreInput.value; guardarStock(); };
+      nombreCell.appendChild(nombreInput);
+      
+      // Cantidad editable
+      const cantidadCell = row.insertCell(1);
+      const cantidadInput = document.createElement('input');
+      cantidadInput.type = 'number';
+      cantidadInput.value = p.cantidad;
+      cantidadInput.className = 'minimal';
+      cantidadInput.onchange = () => { productos[index].cantidad = Number(cantidadInput.value); renderStock(); guardarStock(); };
+      cantidadCell.appendChild(cantidadInput);
+      
+      // Precio editable
+      const precioCell = row.insertCell(2);
+      const precioInput = document.createElement('input');
+      precioInput.type = 'number';
+      precioInput.value = p.precio;
+      precioInput.className = 'minimal';
+      precioInput.onchange = () => { productos[index].precio = Number(precioInput.value); renderStock(); guardarStock(); };
+      precioCell.appendChild(precioInput);
+
+      // Botón eliminar
+      const accionesCell = row.insertCell(3);
+      const btnEliminar = document.createElement('button');
+      btnEliminar.textContent = '✕';
+      btnEliminar.onclick = () => { productos.splice(index,1); renderStock(); guardarStock(); };
+      accionesCell.appendChild(btnEliminar);
+
+      total += p.cantidad * p.precio;
+    });
     document.getElementById('total-stock').textContent = total;
-    localStorage.setItem('stock', JSON.stringify({prod1, prod2, prod3, total}));
   }
 
-  // Cargar stock al inicio
-  window.onload = function() {
-    const stockGuardado = JSON.parse(localStorage.getItem('stock'));
-    if(stockGuardado) {
-      document.getElementById('prod1').value = stockGuardado.prod1;
-      document.getElementById('prod2').value = stockGuardado.prod2;
-      document.getElementById('prod3').value = stockGuardado.prod3;
-      document.getElementById('total-stock').textContent = stockGuardado.total;
+  function guardarStock() {
+    localStorage.setItem('productos', JSON.stringify(productos));
+  }
+
+  function cargarStock() {
+    const guardado = JSON.parse(localStorage.getItem('productos'));
+    if(guardado) {
+      productos = guardado;
+      renderStock();
     }
-    cargarDeudas();
   }
 
-  // Deudas
+  // DEUDAS
   let deudas = [];
 
   function agregarDeuda() {
@@ -149,21 +201,41 @@
     const cantidad = Number(document.getElementById('cantidad-deuda').value);
     if(nombre && cantidad > 0) {
       deudas.push({nombre, cantidad});
-      actualizarTablaDeudas();
+      renderDeudas();
       document.getElementById('nombre-deuda').value = '';
       document.getElementById('cantidad-deuda').value = 0;
       guardarDeudas();
     }
   }
 
-  function actualizarTablaDeudas() {
+  function renderDeudas() {
     const tabla = document.getElementById('tabla-deudas');
-    tabla.innerHTML = `<tr><th>Nombre</th><th>Cantidad</th></tr>`;
+    tabla.innerHTML = `<tr><th>Nombre</th><th>Cantidad</th><th>Acciones</th></tr>`;
     let total = 0;
-    deudas.forEach(d => {
+    deudas.forEach((d,index) => {
       const row = tabla.insertRow();
-      row.insertCell(0).textContent = d.nombre;
-      row.insertCell(1).textContent = d.cantidad;
+
+      const nombreCell = row.insertCell(0);
+      const nombreInput = document.createElement('input');
+      nombreInput.value = d.nombre;
+      nombreInput.className = 'minimal';
+      nombreInput.onchange = () => { deudas[index].nombre = nombreInput.value; guardarDeudas(); };
+      nombreCell.appendChild(nombreInput);
+
+      const cantidadCell = row.insertCell(1);
+      const cantidadInput = document.createElement('input');
+      cantidadInput.type = 'number';
+      cantidadInput.value = d.cantidad;
+      cantidadInput.className = 'minimal';
+      cantidadInput.onchange = () => { deudas[index].cantidad = Number(cantidadInput.value); renderDeudas(); guardarDeudas(); };
+      cantidadCell.appendChild(cantidadInput);
+
+      const accionesCell = row.insertCell(2);
+      const btnEliminar = document.createElement('button');
+      btnEliminar.textContent = '✕';
+      btnEliminar.onclick = () => { deudas.splice(index,1); renderDeudas(); guardarDeudas(); };
+      accionesCell.appendChild(btnEliminar);
+
       total += d.cantidad;
     });
     document.getElementById('total-deudas').textContent = total;
@@ -174,11 +246,18 @@
   }
 
   function cargarDeudas() {
-    const deudasGuardadas = JSON.parse(localStorage.getItem('deudas'));
-    if(deudasGuardadas) {
-      deudas = deudasGuardadas;
-      actualizarTablaDeudas();
+    const guardado = JSON.parse(localStorage.getItem('deudas'));
+    if(guardado) {
+      deudas = guardado;
+      renderDeudas();
     }
+  }
+
+  // Cargar todo al inicio
+  window.onload = function() {
+    cargarStock();
+    cargarDeudas();
+    mostrarSeccion('deudas'); // Por defecto abre Deudas
   }
 </script>
 
